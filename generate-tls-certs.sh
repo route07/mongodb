@@ -23,13 +23,13 @@ openssl genrsa -out "$CERT_DIR/server.key" 4096
 
 # Generate server certificate signing request
 openssl req -new -key "$CERT_DIR/server.key" -out "$CERT_DIR/server.csr" \
-  -subj "/CN=mongo-survey/O=MongoDB"
+  -subj "/CN=mongodb/O=MongoDB"
 
 # Create server certificate extensions file
 cat > "$CERT_DIR/server.ext" <<EOF
 subjectAltName = @alt_names
 [alt_names]
-DNS.1 = mongo-survey
+DNS.1 = mongodb
 DNS.2 = localhost
 IP.1 = 127.0.0.1
 EOF
