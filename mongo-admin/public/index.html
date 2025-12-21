@@ -129,6 +129,12 @@
             </div>
             <div class="modal-body">
                 <p style="margin-bottom: 1rem;">Connect your wallet to access the MongoDB Admin UI</p>
+                <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 0.75rem; margin-bottom: 1rem;">
+                    <strong style="color: #856404; display: block; margin-bottom: 0.25rem;">⚠️ Important:</strong>
+                    <small style="color: #856404;">
+                        Make sure your wallet address is added to <code>ADMIN_WALLETS</code> in the <code>.env</code> file. Only authorized wallets can access the admin UI.
+                    </small>
+                </div>
                 <div id="loginStatus" style="margin: 1rem 0; display: none;"></div>
                 <div class="modal-actions">
                     <button class="btn btn-primary" onclick="connectWallet()" style="width: 100%; padding: 0.75rem;">

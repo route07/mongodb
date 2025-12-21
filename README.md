@@ -96,7 +96,8 @@ The custom MongoDB Admin UI (`mongo-admin`) needs to be built on first run:
 
 ```bash
 # Build and start all services (first time)
-docker-compose up -d --build
+docker-compose up -d --build 
+(or just docker-compose up -d , it will build if not built. If any changes, use --build)
 
 # Or build only mongo-admin
 docker-compose build mongo-admin
