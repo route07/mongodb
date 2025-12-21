@@ -123,6 +123,43 @@ The admin UI supports Web3 wallet authentication. To enable:
 
 See `mongo-admin/WEB3_AUTH.md` for detailed authentication setup.
 
+## Export/Import Databases
+
+To migrate databases from an old MongoDB server to the new admin UI:
+
+### Quick Method (Using Provided Script)
+
+```bash
+# Export from old server using the provided script
+node export-database.js "mongodb://user:pass@old-server:27017/dbname"
+
+# This creates a JSON file ready for import
+# Then import via Admin UI at http://localhost:3000
+```
+
+### Manual Methods
+
+1. **Using mongoexport** (per collection):
+   ```bash
+   mongoexport --uri="mongodb://user:pass@old-server:27017/dbname" \
+     --collection=collection_name --out=collection.json --jsonArray
+   ```
+
+2. **Using mongodump** (entire database):
+   ```bash
+   mongodump --uri="mongodb://user:pass@old-server:27017/dbname" --out=./backup
+   # Then convert BSON to JSON (see guide below)
+   ```
+
+3. **Import via Admin UI**:
+   - Go to `http://localhost:3000`
+   - Create the database (if needed)
+   - Click "Import" on the database
+   - Select your JSON file
+   - Import!
+
+See [EXPORT_IMPORT_GUIDE.md](./EXPORT_IMPORT_GUIDE.md) for detailed instructions and troubleshooting.
+
 ## Notes
 
 - TLS certificates are stored in `tls-certs/` directory
