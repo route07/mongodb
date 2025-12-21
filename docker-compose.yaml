@@ -42,7 +42,7 @@ services:
     volumes:
       - ./tls-certs:/etc/mongo/ssl:ro
     depends_on:
-      - mongo
+      - mongodb
     networks:
       - survey-network
 
