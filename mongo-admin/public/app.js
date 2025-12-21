@@ -22,6 +22,8 @@ async function checkAuthStatus() {
         
         if (data.enabled && !data.authenticated) {
             showLoginModal();
+            // Don't load databases if not authenticated
+            return;
         } else if (data.authenticated) {
             updateAuthUI(data.walletAddress);
             loadDatabases();
@@ -31,7 +33,8 @@ async function checkAuthStatus() {
         }
     } catch (error) {
         console.error('Auth check failed:', error);
-        // If auth is disabled, continue normally
+        // If auth check fails, try to load databases anyway
+        // (might be auth disabled or network issue)
         loadDatabases();
     }
 }
@@ -81,37 +84,12 @@ async function connectWallet() {
         // Create message to sign
         const message = `Sign in to MongoDB Admin UI\n\nWallet: ${walletAddress}\nTimestamp: ${Date.now()}`;
         
-        // Sign message using ethers.js (v5 from CDN)
-        let signature;
-        if (typeof ethers !== 'undefined') {
-            try {
-                // Try ethers v5 (from CDN)
-                if (ethers.providers && ethers.providers.Web3Provider) {
-                    const provider = new ethers.providers.Web3Provider(window.ethereum);
-                    const signer = provider.getSigner();
-                    signature = await signer.signMessage(message);
-                } else if (ethers.BrowserProvider) {
-                    // ethers v6
-                    const provider = new ethers.BrowserProvider(window.ethereum);
-                    const signer = await provider.getSigner();
-                    signature = await signer.signMessage(message);
-                } else {
-                    throw new Error('ethers.js not properly loaded');
-                }
-            } catch (err) {
-                // Fallback: use personal_sign directly
-                signature = await window.ethereum.request({
-                    method: 'personal_sign',
-                    params: [message, walletAddress]
-                });
-            }
-        } else {
-            // Fallback: use personal_sign directly
-            signature = await window.ethereum.request({
-                method: 'personal_sign',
-                params: [message, walletAddress]
-            });
-        }
+        // Sign message using personal_sign (no ethers.js needed on frontend)
+        // The backend will verify using ethers.js
+        const signature = await window.ethereum.request({
+            method: 'personal_sign',
+            params: [message, walletAddress]
+        });
         
         statusEl.innerHTML = '<div style="color: #3498db;">Verifying signature...</div>';
         
@@ -198,19 +176,27 @@ async function loadDatabases() {
     try {
         const response = await fetch(`${API_BASE}/databases`, { credentials: 'include' });
         
-        if (response.status === 401) {
-            const data = await response.json();
-            if (data.requiresAuth) {
+        if (response.status === 401 || response.status === 403) {
+            const data = await response.json().catch(() => ({ requiresAuth: true }));
+            if (data.requiresAuth || response.status === 401) {
                 showLoginModal();
                 return;
             }
         }
         
         if (!response.ok) {
-            throw new Error('Failed to load databases');
+            const errorData = await response.json().catch(() => ({ error: 'Failed to load databases' }));
+            throw new Error(errorData.error || 'Failed to load databases');
         }
         
         const databases = await response.json();
+        
+        // Ensure databases is an array
+        if (!Array.isArray(databases)) {
+            console.error('Invalid response format:', databases);
+            throw new Error('Invalid response from server');
+        }
+        
         const listEl = document.getElementById('databaseList');
         listEl.innerHTML = '';
         
@@ -256,7 +242,25 @@ async function loadCollections(dbName) {
     try {
         currentDb = dbName;
         const response = await fetch(`${API_BASE}/databases/${dbName}/collections`, { credentials: 'include' });
+        
+        if (response.status === 401 || response.status === 403) {
+            const data = await response.json().catch(() => ({ requiresAuth: true }));
+            if (data.requiresAuth || response.status === 401) {
+                showLoginModal();
+                return;
+            }
+        }
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Failed to load collections' }));
+            throw new Error(errorData.error || 'Failed to load collections');
+        }
+        
         const collections = await response.json();
+        
+        if (!Array.isArray(collections)) {
+            throw new Error('Invalid response format');
+        }
         const listEl = document.getElementById('databaseList');
         
         // Update active state
@@ -295,7 +299,25 @@ async function loadDocuments(dbName, collectionName, page = 0) {
             `${API_BASE}/databases/${dbName}/collections/${collectionName}/documents?limit=${pageSize}&skip=${page * pageSize}`,
             { credentials: 'include' }
         );
+        
+        if (response.status === 401 || response.status === 403) {
+            const data = await response.json().catch(() => ({ requiresAuth: true }));
+            if (data.requiresAuth || response.status === 401) {
+                showLoginModal();
+                return;
+            }
+        }
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Failed to load documents' }));
+            throw new Error(errorData.error || 'Failed to load documents');
+        }
+        
         const data = await response.json();
+        
+        if (!data || typeof data !== 'object' || !Array.isArray(data.documents)) {
+            throw new Error('Invalid response format');
+        }
         
         // Show collection view
         document.getElementById('welcomeView').style.display = 'none';

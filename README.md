@@ -42,6 +42,14 @@ ADMIN_UI_PORT=3000
 
 ### 3. Start Services
 
+For the first time (or after changes to mongo-admin), build and start:
+
+```bash
+docker-compose up -d --build
+```
+
+For subsequent starts (no code changes):
+
 ```bash
 docker-compose up -d
 ```
@@ -50,6 +58,10 @@ docker-compose up -d
 
 - **MongoDB**: `localhost:27017` (requires TLS)
 - **Custom Admin UI** (with TLS support): `http://localhost:3000`
+  - Full TLS support
+  - Web3 wallet authentication (optional, see Web3 Auth section)
+  - Database export/import
+  - Create/delete databases
 - **Mongo Express UI** (legacy): `http://localhost:8992`
 
 ## Connection String
@@ -78,8 +90,42 @@ To remove volumes (database data):
 docker-compose down -v
 ```
 
+## Mongo Admin UI Setup
+
+The custom MongoDB Admin UI (`mongo-admin`) needs to be built on first run:
+
+```bash
+# Build and start all services (first time)
+docker-compose up -d --build
+
+# Or build only mongo-admin
+docker-compose build mongo-admin
+docker-compose up -d mongo-admin
+```
+
+### Web3 Authentication (Optional)
+
+The admin UI supports Web3 wallet authentication. To enable:
+
+1. Edit `.env` file:
+   ```bash
+   WEB3_AUTH_ENABLED=true
+   ADMIN_WALLETS=0xYourWalletAddress1,0xYourWalletAddress2
+   SESSION_SECRET=your-secure-random-secret
+   ```
+
+2. Restart the service:
+   ```bash
+   docker-compose restart mongo-admin
+   ```
+
+3. Connect your wallet when accessing the UI
+
+See `mongo-admin/WEB3_AUTH.md` for detailed authentication setup.
+
 ## Notes
 
 - TLS certificates are stored in `tls-certs/` directory
 - Database data is persisted in `db_data/` directory
 - All configuration values are managed via `.env` file
+- Mongo Admin UI requires initial build with `--build` flag

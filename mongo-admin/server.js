@@ -183,7 +183,10 @@ app.post('/api/auth/login', async (req, res) => {
     }
     
     // Verify signature using ethers.js v6
+    // personal_sign prefixes the message, so we need to handle that
     try {
+      // personal_sign adds "\x19Ethereum Signed Message:\n{length}" prefix
+      // ethers.verifyMessage handles this automatically
       const recoveredAddress = ethers.verifyMessage(message, signature).toLowerCase();
       if (recoveredAddress !== address) {
         return res.status(401).json({ error: 'Invalid signature' });
