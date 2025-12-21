@@ -2,9 +2,9 @@
 
 services:
 # MongoDB instance
-  mongo-survey:
+  mongodb:
     image: mongo:7.0
-    container_name: mongo-survey
+    container_name: mongo
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
@@ -24,9 +24,9 @@ services:
       - survey-network
 
   ## MongoDB admin UI
-  mongo-express-survey:
+  mongo-express:
     image: mongo-express
-    container_name: mongo-express-survey
+    container_name: mongo-express
     restart: unless-stopped
     ports:
       - "${MONGO_EXPRESS_PORT:-8992}:8081"
@@ -42,7 +42,7 @@ services:
     volumes:
       - ./tls-certs:/etc/mongo/ssl:ro
     depends_on:
-      - mongo-survey
+      - mongo
     networks:
       - survey-network
 
