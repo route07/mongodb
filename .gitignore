@@ -2,7 +2,6 @@
 tls-certs/
 *.key
 *.pem
-*.crt
 *.csr
 *.srl
 
@@ -16,6 +15,7 @@ db_data/
 database-export/node_modules/
 mongo-admin/node_modules/
 dumps/
+*.zip
 
 # Environment files
 .env
