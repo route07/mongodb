@@ -27,14 +27,17 @@ MONGO_INITDB_ROOT_USERNAME=rbdbuser
 MONGO_INITDB_ROOT_PASSWORD=your_password_here
 MONGO_PORT=27017
 
-# Mongo Express
+# Mongo Express (legacy)
 ME_CONFIG_MONGODB_ADMINUSERNAME=rbdbuser
 ME_CONFIG_MONGODB_ADMINPASSWORD=your_password_here
-ME_CONFIG_MONGODB_SERVER=mongo-survey
+ME_CONFIG_MONGODB_SERVER=mongodb
 ME_CONFIG_MONGODB_PORT=27017
 ME_CONFIG_BASICAUTH_USERNAME=adminu
 ME_CONFIG_BASICAUTH_PASSWORD=adminPassword
 MONGO_EXPRESS_PORT=8992
+
+# Custom MongoDB Admin UI (recommended - supports TLS)
+ADMIN_UI_PORT=3000
 ```
 
 ### 3. Start Services
@@ -46,7 +49,8 @@ docker-compose up -d
 ### 4. Access Services
 
 - **MongoDB**: `localhost:27017` (requires TLS)
-- **Mongo Express UI**: `http://localhost:8992`
+- **Custom Admin UI** (with TLS support): `http://localhost:3000`
+- **Mongo Express UI** (legacy): `http://localhost:8992`
 
 ## Connection String
 
@@ -58,8 +62,9 @@ mongosh "mongodb://your_username:your_password@localhost:27017/?tls=true&tlsCAFi
 
 ## Services
 
-- **mongo-survey**: MongoDB 7.0 instance with TLS encryption
-- **mongo-express-survey**: Web-based MongoDB admin interface
+- **mongodb**: MongoDB 7.0 instance with TLS encryption (requireTLS mode)
+- **mongo-admin**: Custom web-based MongoDB admin interface with full TLS support
+- **mongo-express**: Legacy MongoDB admin interface (mongo-express)
 
 ## Stop Services
 

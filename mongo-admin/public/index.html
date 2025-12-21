@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB Admin UI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🗄️ MongoDB Admin UI</h1>
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot"></span>
+                <span>Connecting...</span>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2 style="margin: 0;">Databases</h2>
+                        <button class="btn btn-primary" onclick="showCreateDatabaseModal()" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">+ New</button>
+                    </div>
+                    <button class="btn btn-secondary" onclick="loadDatabases()" style="width: 100%; margin-bottom: 1rem;">Refresh</button>
+                    <ul id="databaseList" class="list"></ul>
+                </div>
+            </aside>
+
+            <main class="content-area">
+                <div id="welcomeView" class="welcome-view">
+                    <h2>Welcome to MongoDB Admin UI</h2>
+                    <p>Select a database from the sidebar to get started.</p>
+                </div>
+
+                <div id="collectionView" class="collection-view" style="display: none;">
+                    <div class="view-header">
+                        <h2 id="collectionTitle"></h2>
+                        <div class="view-actions">
+                            <button class="btn btn-secondary" onclick="refreshDocuments()">Refresh</button>
+                            <button class="btn btn-primary" onclick="showAddDocumentModal()">Add Document</button>
+                        </div>
+                    </div>
+                    <div class="documents-container">
+                        <div id="documentsList"></div>
+                        <div class="pagination" id="pagination"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add Document Modal -->
+    <div id="addDocumentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Document</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <textarea id="documentJson" placeholder='{"name": "example", "value": 123}'></textarea>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveDocument()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Document Modal -->
+    <div id="editDocumentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Document</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <textarea id="editDocumentJson"></textarea>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="updateDocument()">Update</button>
+                    <button class="btn btn-danger" onclick="deleteDocument()">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Database Modal -->
+    <div id="createDatabaseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Database</h3>
+                <span class="close" onclick="closeCreateDatabaseModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1rem;">
+                    <label for="newDatabaseName" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Database Name:</label>
+                    <input type="text" id="newDatabaseName" placeholder="my_database" 
+                           style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
+                           onkeypress="if(event.key === 'Enter') createDatabase()">
+                    <small style="color: #7f8c8d; display: block; margin-top: 0.5rem;">
+                        • Only letters, numbers, underscores, and hyphens<br>
+                        • Maximum 64 characters<br>
+                        • Cannot use reserved names: admin, local, config
+                    </small>
+                </div>
+                <div id="createDatabaseStatus" style="margin: 1rem 0; display: none;"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeCreateDatabaseModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="createDatabase()">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Database Modal -->
+    <div id="importDatabaseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Import Database</h3>
+                <span class="close" onclick="closeImportModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="importDatabaseName" style="margin-bottom: 1rem; font-weight: 500;"></p>
+                <div style="margin-bottom: 1rem;">
+                    <label for="importFile" style="display: block; margin-bottom: 0.5rem;">Select JSON file to import:</label>
+                    <input type="file" id="importFile" accept=".json" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="dropExisting" style="cursor: pointer;">
+                        <span>Drop existing collections before import</span>
+                    </label>
+                    <small style="color: #7f8c8d; display: block; margin-top: 0.25rem;">
+                        ⚠️ Warning: This will delete all existing data in the database
+                    </small>
+                </div>
+                <div id="importStatus" style="margin: 1rem 0; display: none;"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeImportModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="importDatabase()">Import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -16,34 +16,38 @@ services:
       - ./tls-certs:/etc/mongo/ssl:ro
     command: >
       mongod
-      --tlsMode preferTLS
+      --tlsMode requireTLS
       --tlsCertificateKeyFile /etc/mongo/ssl/server.pem
       --tlsCAFile /etc/mongo/ssl/ca.crt
+      --tlsAllowConnectionsWithoutCertificates
       --bind_ip_all
     networks:
-      - survey-network
+      - db-network
 
-  ## MongoDB admin UI
-  mongo-express:
-    image: mongo-express
-    container_name: mongo-express
+  ## Custom MongoDB Admin UI (with TLS support)
+  mongo-admin:
+    build: ./mongo-admin
+    container_name: mongo-admin
     restart: unless-stopped
     ports:
-      - "${MONGO_EXPRESS_PORT:-8992}:8081"
+      - "${ADMIN_UI_PORT:-3000}:3000"
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: ${ME_CONFIG_MONGODB_ADMINUSERNAME}
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ${ME_CONFIG_MONGODB_ADMINPASSWORD}
-      ME_CONFIG_MONGODB_SERVER: mongodb
-      ME_CONFIG_MONGODB_PORT: 27017
-      ME_CONFIG_BASICAUTH_USERNAME: ${ME_CONFIG_BASICAUTH_USERNAME}
-      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_CONFIG_BASICAUTH_PASSWORD}
+      MONGO_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_HOST: mongodb
+      MONGO_PORT: ${MONGO_PORT:-27017}
+      MONGO_TLS: "true"
+      MONGO_TLS_ALLOW_INVALID: "true"
+      MONGO_TLS_CA_FILE: /etc/mongo/ssl/ca.crt
+      MONGO_TLS_CLIENT_CERT_FILE: /etc/mongo/ssl/client.pem
+      ADMIN_UI_PORT: 3000
     volumes:
       - ./tls-certs:/etc/mongo/ssl:ro
     depends_on:
       - mongodb
     networks:
-      - survey-network
+      - db-network
 
 networks:
-  survey-network:
+  db-network:
     driver: bridge
