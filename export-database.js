@@ -5,6 +5,12 @@
  * Usage:
  *   node export-database.js mongodb://user:pass@host:27017/dbname
  *   node export-database.js mongodb://user:pass@host:27017/dbname output.json
+ * 
+ * With TLS:
+ *   node export-database.js "mongodb://user:pass@host:27017/dbname?tls=true&tlsCAFile=./tls-certs/ca.crt&tlsAllowInvalidCertificates=true&authSource=admin"
+ * 
+ * Requirements:
+ *   npm install  (to install mongodb dependency)
  */
 
 const { MongoClient } = require('mongodb');
@@ -16,11 +22,47 @@ async function exportDatabase(mongoUri, outputFile) {
   
   try {
     console.log('Connecting to MongoDB...');
-    client = new MongoClient(mongoUri);
-    await client.connect();
+    
+    // Parse URI and extract options
+    const url = new URL(mongoUri.replace('mongodb://', 'http://'));
+    const options = {
+      authSource: url.searchParams.get('authSource') || 'admin'
+    };
+    
+    // Handle TLS if specified in URI
+    if (url.searchParams.get('tls') === 'true' || url.searchParams.get('ssl') === 'true') {
+      options.tls = true;
+      if (url.searchParams.get('tlsAllowInvalidCertificates') === 'true' || 
+          url.searchParams.get('sslAllowInvalidCertificates') === 'true') {
+        options.tlsAllowInvalidCertificates = true;
+      }
+      const caFile = url.searchParams.get('tlsCAFile') || url.searchParams.get('sslCAFile');
+      if (caFile && fs.existsSync(caFile)) {
+        options.ca = [fs.readFileSync(caFile, 'utf8')];
+        console.log(`Using CA certificate: ${caFile}`);
+      }
+    }
     
     // Extract database name from URI
-    const dbName = mongoUri.split('/').pop().split('?')[0];
+    // Format: mongodb://user:pass@host:port/dbname?params
+    const uriMatch = mongoUri.match(/mongodb:\/\/[^\/]+\/([^?]+)/);
+    if (!uriMatch || !uriMatch[1]) {
+      throw new Error('Database name not found in connection string. Format: mongodb://user:pass@host:port/dbname');
+    }
+    
+    const dbName = uriMatch[1].trim();
+    console.log(`Using database: ${dbName}`);
+    
+    // Build connection string - keep original but ensure authSource
+    let connectionUri = mongoUri;
+    if (!connectionUri.includes('authSource')) {
+      connectionUri += (connectionUri.includes('?') ? '&' : '?') + `authSource=${options.authSource}`;
+    }
+    
+    client = new MongoClient(connectionUri, options);
+    await client.connect();
+    console.log('✓ Connected successfully');
+    
     const db = client.db(dbName);
     
     console.log(`Exporting database: ${dbName}`);

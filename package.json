@@ -1,0 +1,11 @@
+{
+  "name": "mongo-db-remote",
+  "version": "1.0.0",
+  "description": "MongoDB Docker setup with Admin UI",
+  "scripts": {
+    "export-db": "node export-database.js"
+  },
+  "dependencies": {
+    "mongodb": "^6.3.0"
+  }
+}

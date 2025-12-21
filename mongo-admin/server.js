@@ -341,6 +341,34 @@ app.get('/api/databases/:dbName/collections', requireAuth, async (req, res) => {
   }
 });
 
+// Delete collection
+app.delete('/api/databases/:dbName/collections/:collectionName', requireAuth, async (req, res) => {
+  try {
+    if (!mongoClient) {
+      return res.status(503).json({ error: 'Not connected to MongoDB' });
+    }
+    const db = mongoClient.db(req.params.dbName);
+    const collectionName = req.params.collectionName;
+    
+    // Prevent deletion of system collections
+    if (collectionName.startsWith('system.')) {
+      return res.status(400).json({ error: 'Cannot delete system collections' });
+    }
+    
+    const result = await db.collection(collectionName).drop();
+    
+    res.json({ 
+      message: `Collection "${collectionName}" deleted successfully`,
+      deleted: true
+    });
+  } catch (error) {
+    if (error.codeName === 'NamespaceNotFound') {
+      return res.status(404).json({ error: 'Collection not found' });
+    }
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get documents from a collection
 app.get('/api/databases/:dbName/collections/:collectionName/documents', requireAuth, async (req, res) => {
   try {

@@ -162,53 +162,33 @@ echo "Export file created: $OUTPUT_FILE"
    - Save file
 4. **Combine files** using the script above or manually create the JSON structure
 
-## Method 4: Direct Connection Script (Node.js)
+## Method 4: Using the Provided Export Script (Easiest!)
 
-If you have Node.js access to both servers:
+A ready-to-use export script is included in this project:
 
-```javascript
-// export-database.js
-const { MongoClient } = require('mongodb');
-const fs = require('fs');
+```bash
+# Basic usage (no TLS)
+node export-database.js "mongodb://username:password@old-server:27017/dbname"
 
-async function exportDatabase() {
-  // Connect to old server
-  const oldClient = new MongoClient('mongodb://username:password@old-server:27017');
-  await oldClient.connect();
-  
-  const dbName = 'database_name';
-  const db = oldClient.db(dbName);
-  
-  const exportData = {
-    database: dbName,
-    exportedAt: new Date().toISOString(),
-    collections: {}
-  };
-  
-  // Get all collections
-  const collections = await db.listCollections().toArray();
-  
-  for (const collectionInfo of collections) {
-    const collectionName = collectionInfo.name;
-    const collection = db.collection(collectionName);
-    const documents = await collection.find({}).toArray();
-    exportData.collections[collectionName] = documents;
-  }
-  
-  // Save to file
-  fs.writeFileSync(
-    `${dbName}_export_${Date.now()}.json`,
-    JSON.stringify(exportData, null, 2)
-  );
-  
-  console.log(`Exported ${dbName} successfully`);
-  await oldClient.close();
-}
+# With TLS (like your new server)
+node export-database.js "mongodb://username:password@old-server:27017/dbname?tls=true&tlsCAFile=./tls-certs/ca.crt&tlsAllowInvalidCertificates=true&authSource=admin"
 
-exportDatabase().catch(console.error);
+# Specify output file
+node export-database.js "mongodb://username:password@old-server:27017/dbname" output.json
 ```
 
-Run: `node export-database.js`
+**First time setup:**
+```bash
+# Install dependencies (one time)
+npm install
+```
+
+The script automatically:
+- ✅ Connects to the MongoDB server
+- ✅ Exports all collections
+- ✅ Creates JSON in the exact format the Admin UI expects
+- ✅ Handles TLS connections
+- ✅ Shows progress and statistics
 
 ## Import via Admin UI
 

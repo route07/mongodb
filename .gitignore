@@ -9,6 +9,10 @@ tls-certs/
 # Database data
 db_data/
 
+# Export files
+*_export_*.json
+dumps/
+
 # Environment files
 .env
 .env.local

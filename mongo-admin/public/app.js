@@ -276,9 +276,22 @@ async function loadCollections(dbName) {
             const item = document.createElement('li');
             item.className = 'list-item';
             item.style.marginLeft = '1rem';
-            item.onclick = () => loadDocuments(dbName, collection.name);
+            const isSystemCollection = collection.name.startsWith('system.');
             item.innerHTML = `
-                <div class="item-name">📄 ${collection.name}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <div style="flex: 1; cursor: pointer;" onclick="loadDocuments('${dbName}', '${collection.name}')">
+                        <div class="item-name">📄 ${collection.name} ${isSystemCollection ? '<span style="color: #7f8c8d; font-size: 0.8em;">(system)</span>' : ''}</div>
+                    </div>
+                    ${!isSystemCollection ? `
+                    <div class="collection-actions" style="display: flex; gap: 0.25rem;">
+                        <button class="btn btn-danger" style="padding: 0.2rem 0.4rem; font-size: 0.75rem;" 
+                                onclick="event.stopPropagation(); deleteCollection('${dbName}', '${collection.name}')" 
+                                title="Delete collection">
+                            🗑️
+                        </button>
+                    </div>
+                    ` : ''}
+                </div>
             `;
             listEl.appendChild(item);
         });
@@ -469,6 +482,41 @@ async function deleteDocument() {
 // Refresh documents
 function refreshDocuments() {
     loadDocuments(currentDb, currentCollection, currentPage);
+}
+
+// Delete collection
+async function deleteCollection(dbName, collectionName) {
+    if (!confirm(`Are you sure you want to delete the collection "${collectionName}"?\n\nThis action cannot be undone and will delete all documents in this collection.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/databases/${dbName}/collections/${collectionName}`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.error || 'Failed to delete collection');
+        }
+        
+        showError(`✓ ${result.message}`);
+        
+        // Reload collections
+        loadCollections(dbName);
+        
+        // If we were viewing this collection, go back to database view
+        if (currentDb === dbName && currentCollection === collectionName) {
+            document.getElementById('welcomeView').style.display = 'block';
+            document.getElementById('collectionView').style.display = 'none';
+            currentCollection = null;
+        }
+        
+    } catch (error) {
+        showError(`Delete failed: ${error.message}`);
+    }
 }
 
 // Update pagination

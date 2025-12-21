@@ -373,3 +373,16 @@ header h1 {
 .list-item .db-actions button {
     white-space: nowrap;
 }
+
+.collection-actions {
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.list-item:hover .collection-actions {
+    opacity: 1;
+}
+
+.list-item .collection-actions button {
+    white-space: nowrap;
+}

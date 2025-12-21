@@ -129,11 +129,21 @@ To migrate databases from an old MongoDB server to the new admin UI:
 
 ### Quick Method (Using Provided Script)
 
+**First time setup:**
 ```bash
-# Export from old server using the provided script
+# Install dependencies (one time)
+npm install
+```
+
+**Export from old server:**
+```bash
+# Basic (no TLS)
 node export-database.js "mongodb://user:pass@old-server:27017/dbname"
 
-# This creates a JSON file ready for import
+# With TLS (like your new server)
+node export-database.js "mongodb://user:pass@old-server:27017/dbname?tls=true&tlsCAFile=./tls-certs/ca.crt&tlsAllowInvalidCertificates=true&authSource=admin"
+
+# This creates: dbname_export_TIMESTAMP.json
 # Then import via Admin UI at http://localhost:3000
 ```
 
