@@ -17,7 +17,7 @@ services:
       mongod
       --bind_ip_all
     networks:
-      - db-network
+      - devkyc-db-network
 
   ## Custom MongoDB Admin UI (with TLS support)
   mongo-admin-devkyc:
@@ -39,8 +39,8 @@ services:
     depends_on:
       - mongodb-devkyc
     networks:
-      - db-network
+      - devkyc-db-network
 
 networks:
-  db-network:
+  devkyc-db-network:
     driver: bridge
