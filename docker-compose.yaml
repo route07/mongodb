@@ -2,9 +2,9 @@
 
 services:
 # MongoDB instance
-  mongodb:
+  mongodb-devkyc:
     image: mongo:7.0
-    container_name: mongo
+    container_name: mongo-devkyc
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
@@ -20,24 +20,24 @@ services:
       - db-network
 
   ## Custom MongoDB Admin UI (with TLS support)
-  mongo-admin:
+  mongo-admin-devkyc:
     #build: ./mongo-admin
     image: route07/mongodb-admin:latest
-    container_name: mongo-admin
+    container_name: mongo-admin-devkyc
     restart: unless-stopped
     ports:
       - "${ADMIN_UI_PORT:-3000}:3000"
     environment:
       MONGO_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_HOST: mongodb
-      MONGO_PORT: ${MONGO_PORT:-27017}
+      MONGO_HOST: mongodb-devkyc
+      MONGO_PORT: 27017
       ADMIN_UI_PORT: 3000
       WEB3_AUTH_ENABLED: ${WEB3_AUTH_ENABLED:-false}
       ADMIN_WALLETS: ${ADMIN_WALLETS:-}
       SESSION_SECRET: ${SESSION_SECRET:-mongo-admin-secret-change-in-production}
     depends_on:
-      - mongodb
+      - mongodb-devkyc
     networks:
       - db-network
 
